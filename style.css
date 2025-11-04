@@ -7,8 +7,10 @@
 
 /* Base page styles */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f1f1f1;
+  /* Prefer Helvetica, fall back to Arial then generic sans-serif */
+  font-family: Helvetica, Arial, sans-serif;
+  background-color: #000000; /* set page background to black */
+  color: #ffffff; /* default text color for readability on dark bg */
   padding: 20px;
 }
 
@@ -29,9 +31,10 @@ body {
 }
 
 h1 {
-  font-family: Verdana, sans-serif;
+  /* Use Helvetica for headings as well */
+  font-family: Helvetica, Arial, sans-serif;
   font-weight: bold;
-  color: #212121;
+  color: #ffffff;
 }
 
 /* Logo */
@@ -53,7 +56,8 @@ h1 {
 /* Inputs and buttons */
 input[type="date"],
 button {
-  font-family: Arial, sans-serif;
+  /* Match page font to Helvetica */
+  font-family: Helvetica, Arial, sans-serif;
   font-weight: normal;
   color: #666;
   padding: 10px 15px;
@@ -87,47 +91,173 @@ button:hover {
   }
 }
 
-/* Gallery flex container */
+/* Gallery grid container (responsive) */
 .gallery {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 20px;
   padding: 20px;
-  justify-content: center;
+  grid-template-columns: 1fr; /* mobile: 1 column */
 }
 
-/* Gallery items */
-.gallery-item {
-  flex: 1 1 100%;  /* full width by default */
-  min-width: 280px;
-  max-width: 500px;
+/* 2 columns on medium screens */
+@media (min-width: 600px) {
+  .gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 3 columns on large screens */
+@media (min-width: 1000px) {
+  .gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* APOD card: square shape, image on top, content below */
+.apod-card {
   background: white;
-  padding: 10px;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* Three columns on wider screens */
-@media (min-width: 1000px) {
-  .gallery-item {
-    flex: 0 1 31%;
-  }
-}
-
-.gallery-item img {
+.apod-card .img-wrap {
+  /* modern browsers support aspect-ratio; this keeps the card square */
+  aspect-ratio: 1 / 1;
   width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 4px;
+  background: #000;
 }
 
-.gallery-item p {
-  margin-top: 10px;
-  padding: 5px;
+.apod-card .img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.apod-card .card-body {
+  padding: 10px 12px;
+}
+
+.apod-card h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+  color: #111;
+}
+
+.apod-card .date {
+  font-size: 13px;
+  color: #666;
+}
+
+/* Placeholder stays visually consistent inside the grid */
+.placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: #cccccc; /* lighter placeholder text on dark background */
+}
+
+/* Loading spinner (used inside the button) */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(0,0,0,0.15);
+  border-top-color: #000;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Modal styles: overlay + responsive inner content */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-in-out;
+}
+
+.modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-inner {
+  background: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 1000px;
+  max-height: 90vh;
+  color: #000; /* ensure modal text is dark on white modal background */
+  overflow: auto;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-content img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  /* Ensure image never exceeds viewport height */
+  max-height: 65vh;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.modal-meta {
+  padding: 6px 4px 20px 4px;
+}
+
+.modal-meta h2 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.modal-meta .date {
+  color: #000;
   font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Ensure on very small screens modal inner uses most of viewport */
+@media (max-width: 420px) {
+  .modal-inner { border-radius: 6px; padding: 8px; }
+  .modal-close { top: 6px; right: 8px; }
+  .modal-meta h2 { font-size: 16px; }
 }
 
 /* Placeholder content */
@@ -135,7 +265,7 @@ button:hover {
   flex: 1 1 100%;
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: #cccccc;
 }
 
 .placeholder-icon {
