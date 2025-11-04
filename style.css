@@ -53,6 +53,15 @@ h1 {
   padding: 0 20px;
 }
 
+/* Small hint text under the date input */
+.date-hint {
+  margin: 0 0 10px 0;
+  color: #bfbfbf;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center; /* center on screen */
+}
+
 /* Inputs and buttons */
 input[type="date"],
 button {
@@ -66,6 +75,28 @@ button {
   font-size: 16px;
   line-height: 1.4;
   width: 100%;
+}
+
+/* Make date picker clearly visible on dark background and usable */
+input[type="date"] {
+  background: #ffffff; /* white input so the control is visible */
+  color: #000000; /* black text for legibility */
+  border: 1px solid #cfcfcf;
+}
+
+/* On wider screens allow the date input to grow and the button to stay compact */
+@media (min-width: 600px) {
+  /* Make the date input only as wide as needed to display a full date
+     (e.g. mm/dd/yyyy). Use ch units so width adapts to font metrics. */
+  .filters input[type="date"] {
+    flex: 0 0 auto;       /* don't expand to fill the row */
+    width: auto;
+    min-width: 15ch;      /* at least 15 characters wide */
+    max-width: 20ch;      /* cap at 20 characters for very wide fonts */
+  }
+  .filters button {
+    flex: 0 0 auto;
+  }
 }
 
 /* Button specific */
@@ -143,6 +174,16 @@ button:hover {
   margin: 0;
   font-size: 14px;
 }
+
+/* Date range display under the fact box */
+.date-range {
+  grid-column: 1 / -1;
+  color: #ddd;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.date-range strong { color: #fff; }
 
 .apod-card .img-wrap {
   /* modern browsers support aspect-ratio; this keeps the card square */

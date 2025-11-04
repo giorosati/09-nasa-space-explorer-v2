@@ -6,7 +6,8 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 // pick image items, and replace the placeholder inside #gallery with
 // simple image cards. This keeps the code beginner-friendly and uses
 // const/let and template literals as requested.
-	document.addEventListener('DOMContentLoaded', () => {
+	function init() {
+		console.log('[apod] init() starting — checking DOM for controls');
 		// Did You Know facts (20 items). Pick one at random on load.
 		const facts = [
 			"The footprints on the Moon will likely remain for millions of years because the Moon has no atmosphere to erode them.",
@@ -45,6 +46,24 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 
 		if (!btn || !gallery) return; // nothing to do if DOM structure changed
 
+		// Ensure the date input exists in the filters area. Some browsers or
+		// toolchains may serve a different version of the page or a user
+		// extension might remove the control; create a fallback here so the
+		// UI always has a usable date picker.
+		let startDateInput = document.getElementById('startDate');
+		if (startDateInput) console.log('[apod] found existing #startDate in DOM');
+		const filtersRow = document.querySelector('.filters');
+		if (!startDateInput && filtersRow && btn) {
+			console.log('[apod] #startDate missing — creating fallback input');
+			startDateInput = document.createElement('input');
+			startDateInput.type = 'date';
+			startDateInput.id = 'startDate';
+			startDateInput.setAttribute('aria-label', 'Start date');
+			// insert the input before the button so it appears to the left
+			filtersRow.insertBefore(startDateInput, btn);
+			console.log('[apod] inserted fallback input. filters HTML:', filtersRow.innerHTML);
+		}
+
 		btn.addEventListener('click', async () => {
 			// Pick a new random fact for this click
 			const randomFact = facts[Math.floor(Math.random() * facts.length)];
@@ -59,10 +78,26 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 			btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
 
 			// Show a loading message in the gallery area and ensure it stays
-			// visible for at least 3 seconds even if the fetch completes faster.
+			// visible for at least `minShowMs` even if the fetch completes faster.
 			const minShowMs = 1500;
 			const start = Date.now();
 			gallery.innerHTML = '<div class="placeholder"><p>🔄 Loading space photos…</p></div>';
+
+			// Read the date input; default to today if empty
+			const startDateInput = document.getElementById('startDate');
+			const startDateValue = startDateInput && startDateInput.value ? startDateInput.value : null;
+			const startDateObj = startDateValue ? new Date(startDateValue + 'T00:00:00') : new Date();
+			// normalize to YYYY-MM-DD strings for comparison
+			function formatYMD(d) {
+				const yy = d.getFullYear();
+				const mm = String(d.getMonth() + 1).padStart(2, '0');
+				const dd = String(d.getDate()).padStart(2, '0');
+				return `${yy}-${mm}-${dd}`;
+			}
+			const rangeStartYMD = formatYMD(startDateObj);
+			const endDateObj = new Date(startDateObj);
+			endDateObj.setDate(endDateObj.getDate() + 8); // up to and including 8 days after
+			const rangeEndYMD = formatYMD(endDateObj);
 
 			try {
 				const res = await fetch(apodData);
@@ -74,15 +109,22 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 				const elapsed = Date.now() - start;
 				if (elapsed < minShowMs) await new Promise(r => setTimeout(r, minShowMs - elapsed));
 
-				// data is expected to be an array of APOD-like objects. We will
-				// filter for items that look like images (media_type === 'image' or
-				// a url that ends with a common image extension).
+				// data is expected to be an array of APOD-like objects.
+				// Filter for items that are images and whose `date` falls within the requested range.
 				const images = Array.isArray(data)
-					? data.filter(item => item && (item.media_type === 'image' || /\.(jpg|jpeg|png|gif)$/i.test(item.url || '')))
+					? data.filter(item => {
+						if (!item || !item.date) return false;
+						// Only images (skip videos)
+						const isImage = item.media_type === 'image' || /\.(jpg|jpeg|png|gif)$/i.test(item.url || '');
+						if (!isImage) return false;
+						// date strings are expected in YYYY-MM-DD format
+						const d = item.date;
+						return d >= rangeStartYMD && d <= rangeEndYMD;
+					})
 					: [];
 
-				// Limit to 12 items
-				const limited = images.slice(0, 12);
+				// Limit to a maximum of 9 images
+				const limited = images.slice(0, 9);
 
 					// Clear placeholder and show a random fact above the images
 					gallery.innerHTML = '';
@@ -93,6 +135,12 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 						<p>${randomFact}</p>
 					`;
 					gallery.appendChild(factBox);
+
+					// Show the date range used
+					const rangeBox = document.createElement('div');
+					rangeBox.className = 'date-range';
+					rangeBox.innerHTML = `<p>Showing images from <strong>${rangeStartYMD}</strong> to <strong>${rangeEndYMD}</strong></p>`;
+					gallery.appendChild(rangeBox);
 
 				if (limited.length === 0) {
 					gallery.innerHTML = '<div class="placeholder"><p>No images found in the feed.</p></div>';
@@ -242,4 +290,14 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 			if (e.key === 'Escape') closeModal();
 		});
 
-	});
+	}
+
+	// If the document is still loading, wait for DOMContentLoaded. Otherwise
+	// run init immediately. This covers cases where the script is loaded
+	// after the event has already fired (which would prevent the listener
+	// from running and leave the input missing).
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', init);
+	} else {
+		init();
+	}
