@@ -105,13 +105,29 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 					card.className = 'apod-card';
 
 					// Use safe fallbacks for missing fields
-					const imgSrc = item.url || '';
 					const title = item.title || 'Untitled';
 					const date = item.date || '';
+					const mediaType = item.media_type || '';
+					let thumbSrc = '';
+
+					if (mediaType === 'video') {
+						// Try to use a provided thumbnail, otherwise derive from YouTube URL
+						thumbSrc = item.thumbnail_url || '';
+						if (!thumbSrc && item.url) {
+							// Detect YouTube video id to build a thumbnail URL
+							const ytMatch = item.url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+							if (ytMatch && ytMatch[1]) {
+								thumbSrc = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+							}
+						}
+					} else {
+						thumbSrc = item.url || '';
+					}
 
 					card.innerHTML = `
 						<div class="img-wrap">
-							<img src="${imgSrc}" alt="${title}" />
+							<img src="${thumbSrc}" alt="${title}" />
+							${mediaType === 'video' ? '<div class="play-overlay">▶</div>' : ''}
 						</div>
 						<div class="card-body">
 							<h3>${title}</h3>
@@ -120,10 +136,11 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 					`;
 
 					// Store extra fields on the card for easy access when opening modal
-					card.dataset.url = imgSrc;
+					card.dataset.url = item.url || '';
 					card.dataset.title = title;
 					card.dataset.date = date;
 					card.dataset.explanation = item.explanation || '';
+					card.dataset.media = mediaType;
 
 					gallery.appendChild(card);
 				});
@@ -153,10 +170,45 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 
 		// ------------------ Modal helpers ------------------
 
-		function openModal({url, title, date, explanation}){
+		function openModal({url, title, date, explanation, media}){
 			if (!modal) return;
-			modalImg.src = url || '';
-			modalImg.alt = title || '';
+			// Remove any existing video iframe
+			const existingIframe = modal.querySelector('iframe');
+			if (existingIframe) existingIframe.remove();
+			// Show image or video depending on media type
+			if (media === 'video') {
+				// Hide modalImg and create iframe if possible
+				modalImg.style.display = 'none';
+				// Try to convert YouTube or generic video URLs to an embeddable src
+				let embedSrc = '';
+				if (url) {
+					const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+					if (ytMatch && ytMatch[1]) {
+						embedSrc = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
+					} else if (url.includes('youtube.com/embed')) {
+						embedSrc = url;
+					}
+				}
+				if (embedSrc) {
+					const iframe = document.createElement('iframe');
+					iframe.src = embedSrc;
+					iframe.width = '100%';
+					iframe.height = '480';
+					iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+					iframe.setAttribute('allowfullscreen', '');
+					modal.querySelector('.modal-content').insertBefore(iframe, modal.querySelector('.modal-meta'));
+				} else {
+					// Fallback: show thumbnail image and provide a link in meta
+					modalImg.style.display = '';
+					modalImg.src = '';
+				}
+			} else {
+				// ensure modalImg is visible and set to image URL
+				modalImg.style.display = '';
+				modalImg.src = url || '';
+				modalImg.alt = title || '';
+			}
+
 			modalTitle.textContent = title || '';
 			modalDate.textContent = date || '';
 			modalExplanation.textContent = explanation || '';
@@ -171,6 +223,9 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 			modal.setAttribute('aria-hidden', 'true');
 			// remove image src to free memory
 			modalImg.src = '';
+			// remove any iframe if present (stop playback)
+			const iframe = modal.querySelector('iframe');
+			if (iframe) iframe.remove();
 			document.body.style.overflow = '';
 		}
 
