@@ -28,7 +28,7 @@ const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 
 			// Show a loading message in the gallery area and ensure it stays
 			// visible for at least 3 seconds even if the fetch completes faster.
-			const minShowMs = 3000;
+			const minShowMs = 1500;
 			const start = Date.now();
 			gallery.innerHTML = '<div class="placeholder"><p>🔄 Loading space photos…</p></div>';
 

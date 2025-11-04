@@ -9,7 +9,7 @@
 body {
   /* Prefer Helvetica, fall back to Arial then generic sans-serif */
   font-family: Helvetica, Arial, sans-serif;
-  background-color: #000000; /* set page background to black */
+  background-color: #111111; /* slightly lighter, softer black */
   color: #ffffff; /* default text color for readability on dark bg */
   padding: 20px;
 }
@@ -121,6 +121,9 @@ button:hover {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  will-change: transform, box-shadow;
+  transform-origin: center center;
 }
 
 .apod-card .img-wrap {
@@ -143,6 +146,7 @@ button:hover {
 
 .apod-card h3 {
   font-size: 16px;
+  margin-top: 8px;
   margin-bottom: 6px;
   color: #111;
 }
@@ -150,6 +154,25 @@ button:hover {
 .apod-card .date {
   font-size: 13px;
   color: #666;
+}
+
+/* Hover effect: subtle scale + glow for pointer devices */
+@media (hover: hover) and (pointer: fine) {
+  .apod-card:hover {
+    transform: translateY(-6px) scale(1.03);
+    /* stronger lift shadow plus a wider, softer colored glow */
+    box-shadow: 0 18px 50px rgba(0,0,0,0.38), 0 0 60px rgba(30,140,255,0.06);
+  }
+
+  /* subtle image zoom inside the card on hover */
+  .apod-card .img-wrap img {
+    transition: transform 300ms ease;
+    will-change: transform;
+  }
+
+  .apod-card:hover .img-wrap img {
+    transform: scale(1.06);
+  }
 }
 
 /* Placeholder stays visually consistent inside the grid */
@@ -161,16 +184,26 @@ button:hover {
 }
 
 /* Loading spinner (used inside the button) */
+/* Colorful ring spinner with a white center to make a donut */
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 3px solid rgba(0,0,0,0.15);
-  border-top-color: #000;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: inline-block;
   vertical-align: middle;
-  animation: spin 1s linear infinite;
   margin-right: 8px;
+  background: conic-gradient(from 0deg, #ff6b6b, #ffd93d, #6be07b, #6bd0ff, #a36bff, #ff6bb3);
+  box-shadow: 0 0 10px rgba(0,0,0,0.18);
+  animation: spin 1s linear infinite;
+  position: relative;
+}
+.spinner::after {
+  /* inner white circle to create a ring effect */
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #fff;
 }
 
 @keyframes spin {
