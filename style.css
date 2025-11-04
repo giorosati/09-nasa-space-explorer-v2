@@ -126,6 +126,24 @@ button:hover {
   transform-origin: center center;
 }
 
+/* Fact box that appears above the gallery items */
+.fact-box {
+  grid-column: 1 / -1;
+  background: #fff;
+  color: #000;
+  padding: 14px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.fact-box h2 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.fact-box p {
+  margin: 0;
+  font-size: 14px;
+}
+
 .apod-card .img-wrap {
   /* modern browsers support aspect-ratio; this keeps the card square */
   aspect-ratio: 1 / 1;
